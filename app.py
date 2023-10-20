@@ -2,6 +2,7 @@
 
 import random
 from flask import Flask, render_template
+from nltk.corpus import wordnet
 
 app = Flask(__name__)
 
@@ -51,6 +52,16 @@ def generate_crossword(word_list, grid_size):
                 word_list.remove(word)
     return grid
 
+def generate_crossword_clues(words):
+    clues = {}
+    for word in words:
+        synsets = wordnet.synsets(word)
+        if synsets:
+            definition = synsets[0].definition()
+            clues[word] = definition
+        else:
+            clues[word] = "No definition found"
+    return clues
 
 @app.route('/')
 def crossword():
@@ -58,7 +69,15 @@ def crossword():
     ans = word_list
     crossword_grid = generate_crossword(word_list, grid_size)
     word_list = ans
-    return render_template('crossword.html', grid=crossword_grid)
+    
+    # Generate clues
+    clues = generate_crossword_clues(word_list)
+
+    # Separate the clues into 'across' and 'down' categories
+    across_clues = [clues[word] for word in word_list if crossword_grid[0].count(word[0]) > 1]
+    down_clues = [clues[word] for word in word_list if crossword_grid[0].count(word[0]) == 1]
+
+    return render_template('crossword.html', grid=crossword_grid, across=across_clues, down=down_clues)
 
 if __name__ == '__main__':
     app.run(debug=True)

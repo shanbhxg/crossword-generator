@@ -49,5 +49,17 @@
         </tr>
         {% endfor %}
     </table>
+    <h1>Across</h1>
+    <ol>
+        {% for clue in across %}
+        <li>{{ clue }}</li>
+        {% endfor %}
+    </ol>
+    <h1>Down</h1>
+    <ol>
+        {% for clue in down %}
+        <li>{{ clue }}</li>
+        {% endfor %}
+    </ol>
 </body>
 </html>
