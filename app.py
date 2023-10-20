@@ -5,8 +5,10 @@ from flask import Flask, render_template
 import nltk
 from nltk.corpus import wordnet
 nltk.download('wordnet')
+nltk.download('omw-1.4')
 
 app = Flask(__name__)
+app.secret_key = 'abc'
 
 def get_random_words(num_words):
     random_words = []
@@ -20,11 +22,10 @@ def get_random_words(num_words):
         if 3 <= len(word) <= 8:
             random_words.append(word) 
     return random_words
-# Sample list of words for testing
-# generating a list of random words using the wordnet corpus
-num_words = 10  # Change the number of random words as needed
+
+
+num_words = 5  # Change the number of random words as needed
 word_list = get_random_words(num_words)   
-ans = word_list
 grid_size = max(len(word) for word in word_list) + 1
 
 def generate_crossword(word_list, grid_size):
@@ -71,28 +72,21 @@ def generate_crossword(word_list, grid_size):
 def generate_crossword_clues(words):
     clues = {}
     for word in words:
-        # Find the first synset (sense) of the word in WordNet
-        synsets = wordnet.synsets(word)
-        if synsets:
-            # Use the definition of the first synset as the clue
-            clues[word] = synsets[0].definition()
-        else:
-            # If no definition is found, provide a default message
-            clues[word] = "No definition found"
+        # synonyms of the word
+        syns = wordnet.synsets(word)
+        clue = ''
+        if syns:
+            clue = syns[0].definition()
+        clues[word] = clue 
     return clues
 
 @app.route('/')
 def crossword():
-    word_list = get_random_words(10)   
-    ans = word_list
+    word_list = get_random_words(5)   
     grid_size = max(len(word) for word in word_list) + 1
-    crossword_grid = generate_crossword(word_list, grid_size)
-    word_list = ans
-    # Generate clues
     clues = generate_crossword_clues(word_list)
-    across_clues = {i: clues[word] for i, word in enumerate(word_list)}
-    down_clues = {i: clues[word] for i, word in enumerate(word_list, len(word_list))}
-    return render_template('crossword.html', grid=crossword_grid, across=across_clues, down=down_clues)
+    crossword_grid = generate_crossword(word_list, grid_size)
+    return render_template('crossword.html', grid=crossword_grid, clues=clues)
 
 if __name__ == '__main__':
     app.run(debug=True)
