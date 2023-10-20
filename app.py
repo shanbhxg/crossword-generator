@@ -5,6 +5,9 @@ from flask import Flask, render_template
 import nltk
 from nltk.corpus import wordnet
 
+nltk.download('wordnet')
+nltk.download('omw')
+
 app = Flask(__name__)
 
 def get_random_words(num_words):

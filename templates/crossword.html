@@ -51,7 +51,7 @@
     </table>
     <h1>CLUES</h1>
     <ol>
-        {% for clue in clues %}
+        {% for word, clue in clues.items() %}
         <li>{{ clue }}</li>
         {% endfor %}
     </ol>
