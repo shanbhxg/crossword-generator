@@ -4,8 +4,8 @@ import random
 from flask import Flask, render_template
 import nltk
 from nltk.corpus import wordnet
-nltk.download('wordnet')
-nltk.download('omw-1.4')
+# nltk.download('wordnet')
+# nltk.download('omw-1.4')
 
 app = Flask(__name__)
 
