@@ -1,4 +1,2 @@
 flask
 nltk
-nltk.corpus
-nltk.corpus.wordnet
