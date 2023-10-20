@@ -1,0 +1,53 @@
+<!-- templates/crossword.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <style type="text/css">
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 10%;
+            justify-content: center;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin: 20px auto;
+        }
+
+        td {
+            width: 50px; /* You can adjust the cell size as needed */
+            height: 50px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            border: 1px solid #ccc;
+        }
+
+        tr {
+            height: 30px;
+        }
+
+        /* Style for empty cells (black background) */
+        td.empty {
+            background-color: #000;
+        }
+    </style>
+    <title>Crossword Generator</title>
+</head>
+<body>
+    <table border="1">
+        {% for row in grid %}
+        <tr>
+            {% for cell in row %}
+                {% if cell == ' ' %}
+                    <td class="empty">&nbsp;</td>
+                {% else %}
+                    <td>{{ cell }}</td>
+                {% endif %}
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
