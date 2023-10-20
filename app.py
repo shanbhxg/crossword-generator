@@ -2,12 +2,28 @@
 
 import random
 from flask import Flask, render_template
+import nltk
 from nltk.corpus import wordnet
+nltk.download('wordnet')
 
 app = Flask(__name__)
 
+def get_random_words(num_words):
+    random_words = []
+    word_synsets = list(wordnet.all_synsets())
+    
+    while len(random_words) < num_words:
+        synset = random.choice(word_synsets)
+        word = synset.name().split('.')[0]  # Get the word without the part of speech
+        
+        # Check if the word's length is between 3 and 8 characters
+        if 3 <= len(word) <= 8:
+            random_words.append(word) 
+    return random_words
 # Sample list of words for testing
-word_list = ['apple', 'pear', 'roast', 'tree']
+# generating a list of random words using the wordnet corpus
+num_words = 10  # Change the number of random words as needed
+word_list = get_random_words(num_words)   
 ans = word_list
 grid_size = max(len(word) for word in word_list) + 1
 
@@ -55,28 +71,27 @@ def generate_crossword(word_list, grid_size):
 def generate_crossword_clues(words):
     clues = {}
     for word in words:
+        # Find the first synset (sense) of the word in WordNet
         synsets = wordnet.synsets(word)
         if synsets:
-            definition = synsets[0].definition()
-            clues[word] = definition
+            # Use the definition of the first synset as the clue
+            clues[word] = synsets[0].definition()
         else:
+            # If no definition is found, provide a default message
             clues[word] = "No definition found"
     return clues
 
 @app.route('/')
 def crossword():
-    word_list = ['apple', 'pear', 'roast', 'tree']
+    word_list = get_random_words(10)   
     ans = word_list
+    grid_size = max(len(word) for word in word_list) + 1
     crossword_grid = generate_crossword(word_list, grid_size)
     word_list = ans
-    
     # Generate clues
     clues = generate_crossword_clues(word_list)
-
-    # Separate the clues into 'across' and 'down' categories
-    across_clues = [clues[word] for word in word_list if crossword_grid[0].count(word[0]) > 1]
-    down_clues = [clues[word] for word in word_list if crossword_grid[0].count(word[0]) == 1]
-
+    across_clues = {i: clues[word] for i, word in enumerate(word_list)}
+    down_clues = {i: clues[word] for i, word in enumerate(word_list, len(word_list))}
     return render_template('crossword.html', grid=crossword_grid, across=across_clues, down=down_clues)
 
 if __name__ == '__main__':
