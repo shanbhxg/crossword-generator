@@ -8,7 +8,6 @@ nltk.download('wordnet')
 nltk.download('omw-1.4')
 
 app = Flask(__name__)
-app.secret_key = 'abc'
 
 def get_random_words(num_words):
     random_words = []
