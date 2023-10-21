@@ -26,7 +26,7 @@ def get_random_words(num_words):
 
 num_words = 5  # Change the number of random words as needed
 word_list = get_random_words(num_words)   
-grid_size = max(len(word) for word in word_list) + 1
+grid_size = max(len(word) for word in word_list)
 
 def generate_crossword(word_list, grid_size):
     # Create an empty grid

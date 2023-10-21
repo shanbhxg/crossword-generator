@@ -40,11 +40,7 @@
         {% for row in grid %}
         <tr>
             {% for cell in row %}
-                {% if cell == ' ' %}
-                    <td class="empty">&nbsp;</td>
-                {% else %}
-                    <td>{{ cell }}</td>
-                {% endif %}
+            <td {% if cell == ' ' %}class="empty"{% endif %}>{{ cell }}</td>
             {% endfor %}
         </tr>
         {% endfor %}
