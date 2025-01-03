@@ -1,12 +1,12 @@
 import random
 from flask import Flask, jsonify
 import nltk
-from nltk.corpus import wordnet
 from flask_cors import CORS
 
+nltk_data_path = os.path.join(os.path.dirname(__file__), 'nltk_data')
+os.environ['NLTK_DATA'] = nltk_data_path
 
-nltk.download('wordnet')
-nltk.download('omw')
+nltk.data.path.append(nltk_data_path) 
 
 app = Flask(__name__)
 CORS(app)
