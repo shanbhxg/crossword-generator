@@ -8,7 +8,11 @@ from nltk.corpus import wordnet
 nltk_data_path = os.path.join(os.path.dirname(__file__), 'nltk_data')
 os.environ['NLTK_DATA'] = nltk_data_path
 nltk.data.path.append(nltk_data_path)
-
+try:
+    omw = nltk.data.find('corpora/omw-1.4')
+    print("omw-1.4 found!")
+except LookupError:
+    print("omw-1.4 not found and ignored")
 app = Flask(__name__)
 CORS(app)
 def get_random_words(num_words):
