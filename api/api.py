@@ -2,6 +2,7 @@ import random
 from flask import Flask, jsonify
 import nltk
 from flask_cors import CORS
+import os
 
 nltk_data_path = os.path.join(os.path.dirname(__file__), 'nltk_data')
 os.environ['NLTK_DATA'] = nltk_data_path
