@@ -31,7 +31,7 @@ export default {
   methods: {
     async fetchCrosswordData() {
       try {
-        const response = await axios.get('http://127.0.0.1:5000/api/crossword');
+        const response = await axios.get('https://crosswrd.vercel.app/api/crossword');
         const data = response.data;
         this.grid = data.grid;
         this.clues = data.clues;
