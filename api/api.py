@@ -5,26 +5,37 @@ from flask_cors import CORS
 import os
 from nltk.corpus import wordnet
 
+# Set the NLTK_DATA path to the local 'nltk_data' directory
 nltk_data_path = os.path.join(os.path.dirname(__file__), 'nltk_data')
 os.environ['NLTK_DATA'] = nltk_data_path
 nltk.data.path.append(nltk_data_path)
+
+# Load words from 'en' corpus
 try:
-    omw = nltk.data.find('corpora/omw-1.4')
-    print("omw-1.4 found!")
+    from nltk.corpus import words
+    print("Words corpus loaded successfully!")
 except LookupError:
-    print("omw-1.4 not found and ignored")
+    print("Words corpus not found!")
+
+# Load wordnet corpus for synonyms and definitions
+try:
+    wordnet.ensure_loaded()
+    print("Wordnet corpus loaded successfully!")
+except LookupError:
+    print("Wordnet corpus not found!")
+
 app = Flask(__name__)
 CORS(app)
+
 def get_random_words(num_words):
     random_words = []
-    word_synsets = list(wordnet.all_synsets())
+    word_list = words.words('en')  # Load the word list directly from 'en'
     
     while len(random_words) < num_words:
-        synset = random.choice(word_synsets)
-        word = synset.name().split('.')[0]  # Get the word without the part of speech
-        
-        if 3 <= len(word) <= 8:
-            random_words.append(word) 
+        word = random.choice(word_list)
+        if 3 <= len(word) <= 8:  # Filter words by length (3 to 8 characters)
+            random_words.append(word)
+    
     return random_words
 
 def generate_crossword(word_list, grid_size):
@@ -68,10 +79,11 @@ def generate_crossword(word_list, grid_size):
 def generate_crossword_clues(words):
     clues = {}
     for word in words:
-        syns = wordnet.synsets(word)
+        # Fetching the synonyms for each word from WordNet
+        synsets = wordnet.synsets(word)
         clue = ''
-        if syns:
-            clue = syns[0].definition()
+        if synsets:
+            clue = synsets[0].definition()  # Taking the definition from the first synset
         clues[word] = clue 
     return clues
 
