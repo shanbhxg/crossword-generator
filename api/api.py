@@ -3,11 +3,11 @@ from flask import Flask, jsonify
 import nltk
 from flask_cors import CORS
 import os
+from nltk.corpus import wordnet
 
 nltk_data_path = os.path.join(os.path.dirname(__file__), 'nltk_data')
 os.environ['NLTK_DATA'] = nltk_data_path
-
-nltk.data.path.append(nltk_data_path) 
+nltk.data.path.append(nltk_data_path)
 
 app = Flask(__name__)
 CORS(app)
