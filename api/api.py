@@ -97,22 +97,30 @@ def generate_crossword(words):
 
     return grid, word_positions, word_numbers
 
-def handler(req, res):
-    if req.path == '/api/generate':
-        words = random.sample(load_words('api/words/english.txt'), 10) 
-        crossword_grid, word_positions, word_numbers = generate_crossword(words)
-        clues = {word: fetch_definition(word) for word in words}
+class handler(BaseHTTPRequestHandler):
 
-        formatted_clues = [{'number': word_numbers[word], 'text': clues[word], 'length': len(word)} for word in words]
-        formatted_clues_sorted = sorted(formatted_clues, key=lambda clue: word_numbers[words[formatted_clues.index(clue)]])
+    def do_GET(self):
+        if self.path == '/api/generate':
+            words = random.sample(load_words('api/words/english.txt'), 10) 
+            crossword_grid, word_positions, word_numbers = generate_crossword(words)
+            clues = {word: fetch_definition(word) for word in words}
 
-        crossword = {
-            "grid": crossword_grid,
-            "word_positions": sorted(word_positions, key=lambda x: (x['direction'], x['number'])),
-            "clues": formatted_clues_sorted
-        }
+            formatted_clues = [{'number': word_numbers[word], 'text': clues[word], 'length': len(word)} for word in words]
+            formatted_clues_sorted = sorted(formatted_clues, key=lambda clue: word_numbers[words[formatted_clues.index(clue)]])
 
-        res.status(200).json(crossword)
+            crossword = {
+                "grid": crossword_grid,
+                "word_positions": sorted(word_positions, key=lambda x: (x['direction'], x['number'])),
+                "clues": formatted_clues_sorted
+            }
 
-    else:
-        res.status(404).send("Not Found")
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(crossword).encode('utf-8'))
+
+        else:
+            self.send_response(404)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            self.wfile.write('Not Found'.encode('utf-8'))
