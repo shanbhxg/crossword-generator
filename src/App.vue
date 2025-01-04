@@ -3,8 +3,6 @@
     <h1>Crossword Generator</h1>
 
     <button @click="generateCrossword">Generate Crossword</button>
-
-    <!-- Show crossword grid -->
     <div v-if="grid.length > 0" class="crossword-container">
       <div v-for="(row, rowIndex) in grid" :key="rowIndex" class="crossword-row">
         <div
@@ -13,6 +11,10 @@
           class="crossword-cell"
           :class="{'empty': cell === ' ', 'filled': cell !== ' '}"
         >
+          <div v-if="isStartOfWord(rowIndex, cellIndex)" class="word-number">
+            {{ getWordNumber(rowIndex, cellIndex) }}
+          </div>
+
           <input
             v-if="cell !== ' '"
             v-model="userGrid[rowIndex][cellIndex]"
@@ -20,13 +22,12 @@
             maxlength="1"
             class="crossword-input"
             @input="checkAnswer(rowIndex, cellIndex)"
-            :disabled="userGrid[rowIndex][cellIndex] !== ''"
+            :disabled="userGrid[rowIndex][cellIndex] !== '' && !canEdit(rowIndex, cellIndex)"
           />
         </div>
       </div>
     </div>
 
-    <!-- Show clues -->
     <div v-if="clues && clues.length > 0" class="clues-container">
       <h3>Clues:</h3>
       <div v-for="(clue, index) in clues" :key="index">
@@ -34,7 +35,6 @@
       </div>
     </div>
 
-    <!-- Error Handling -->
     <div v-if="errorMessage" class="error">
       <p>{{ errorMessage }}</p>
     </div>
@@ -48,21 +48,21 @@ export default {
       grid: [],
       userGrid: [],
       clues: [],
+      wordPositions: [], 
       errorMessage: null,
     };
   },
   methods: {
-    // Fetch the crossword data from the backend
     async generateCrossword() {
       try {
-        const response = await fetch("http://127.0.0.1:5000/generate");
+        const response = await fetch("http://localhost:5000/generate");
         if (!response.ok) {
           throw new Error("Failed to fetch crossword data");
         }
         const data = await response.json();
 
-        // Set grid, clues, and initialize the userGrid for user input
         this.grid = data.grid;
+        this.wordPositions = data.word_positions;
         this.clues = Object.values(data.clues);
         this.userGrid = this.createEmptyGrid(this.grid.length, this.grid[0].length);
         this.errorMessage = null;
@@ -72,19 +72,38 @@ export default {
       }
     },
 
-    // Create an empty user grid for input
     createEmptyGrid(rows, cols) {
       return Array.from({ length: rows }, () => Array(cols).fill(''));
     },
 
-    // Check the answer as the user types
     checkAnswer(rowIndex, cellIndex) {
       const answer = this.grid[rowIndex][cellIndex];
       if (this.userGrid[rowIndex][cellIndex].toUpperCase() === answer.toUpperCase()) {
         this.$set(this.userGrid[rowIndex], cellIndex, this.userGrid[rowIndex][cellIndex].toUpperCase());
       }
-    }
-  }
+    },
+
+    isStartOfWord(rowIndex, cellIndex) {
+      return this.wordPositions.some(
+        (word) =>
+          (word.direction === 'across' && word.y === rowIndex && word.x === cellIndex) ||
+          (word.direction === 'down' && word.x === cellIndex && word.y === rowIndex)
+      );
+    },
+
+    getWordNumber(rowIndex, cellIndex) {
+      const word = this.wordPositions.find(
+        (word) =>
+          (word.direction === 'across' && word.y === rowIndex && word.x === cellIndex) ||
+          (word.direction === 'down' && word.x === cellIndex && word.y === rowIndex)
+      );
+      return word ? this.wordPositions.indexOf(word) + 1 : null;
+    },
+
+    canEdit(rowIndex, cellIndex) {
+      return this.userGrid[rowIndex][cellIndex] !== '';
+    },
+  },
 };
 </script>
 
@@ -139,6 +158,12 @@ button {
   outline: none;
   width: 20px;
   height: 20px;
+}
+
+.word-number {
+  font-size: 14px;
+  color: #007bff;
+  font-weight: bold;
 }
 
 .clues-container {
