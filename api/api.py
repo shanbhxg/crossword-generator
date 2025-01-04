@@ -1,99 +1,93 @@
 import random
+import requests
 from flask import Flask, jsonify
-import nltk
-from flask_cors import CORS
-import os
-from nltk.corpus import wordnet
-
-# Set the NLTK_DATA path to the local 'nltk_data' directory
-nltk_data_path = os.path.join(os.path.dirname(__file__), 'nltk_data')
-os.environ['NLTK_DATA'] = nltk_data_path
-nltk.data.path.append(nltk_data_path)
-
-# Load words from 'en' corpus
-try:
-    from nltk.corpus import words
-    print("Words corpus loaded successfully!")
-except LookupError:
-    print("Words corpus not found!")
-
-# Load wordnet corpus for synonyms and definitions
-try:
-    wordnet.ensure_loaded()
-    print("Wordnet corpus loaded successfully!")
-except LookupError:
-    print("Wordnet corpus not found!")
-
+from flask_cors import CORS  
 app = Flask(__name__)
 CORS(app)
+# Define the URL for the Free Dictionary API
+API_URL = "https://api.dictionaryapi.dev/api/v2/entries/en/"
 
-def get_random_words(num_words):
-    random_words = []
-    word_list = words.words('en')  # Load the word list directly from 'en'
+# Load words from 'english.txt'
+def load_words(file_path):
+    with open(file_path, 'r') as file:
+        words = file.readlines()
+    return [word.strip() for word in words]
+
+# Fetch word definition (clue) from the Free Dictionary API
+def fetch_definition(word):
+    url = f"{API_URL}{word}"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+        definitions = data[0]['meanings'][0]['definitions']
+        return definitions[0]['definition']  # We use the first definition as the clue
+    except requests.exceptions.RequestException:
+        return "No clue available."
+
+# Function to generate the crossword grid
+def generate_crossword(words):
+    grid_size = 15  # Define the size of the grid (e.g., 15x15)
+    grid = [[' ' for _ in range(grid_size)] for _ in range(grid_size)]  # Empty grid
+
+    word_positions = []  # List to store words and their positions (x, y, direction)
+
+    # Attempt to place words into the grid
+    def place_word(word):
+        word_len = len(word)
+        placed = False
+
+        for _ in range(100):  # Try 100 times to place the word
+            direction = random.choice(['across', 'down'])
+            x = random.randint(0, grid_size - 1)
+            y = random.randint(0, grid_size - 1)
+
+            if direction == 'across' and x + word_len <= grid_size:
+                # Check if the word fits and doesn't overlap incorrectly
+                if all(grid[y][x + i] == ' ' or grid[y][x + i] == word[i] for i in range(word_len)):
+                    # Place the word
+                    for i in range(word_len):
+                        grid[y][x + i] = word[i]
+                    word_positions.append({'word': word, 'x': x, 'y': y, 'direction': 'across'})
+                    placed = True
+                    break
+
+            elif direction == 'down' and y + word_len <= grid_size:
+                # Check if the word fits and doesn't overlap incorrectly
+                if all(grid[y + i][x] == ' ' or grid[y + i][x] == word[i] for i in range(word_len)):
+                    # Place the word
+                    for i in range(word_len):
+                        grid[y + i][x] = word[i]
+                    word_positions.append({'word': word, 'x': x, 'y': y, 'direction': 'down'})
+                    placed = True
+                    break
+
+        return placed
+
+    # Try placing all words on the grid
+    for word in sorted(words, key=lambda w: -len(w)):  # Sort by word length (longest first)
+        if not place_word(word):
+            print(f"Failed to place word: {word}")
     
-    while len(random_words) < num_words:
-        word = random.choice(word_list)
-        if 3 <= len(word) <= 8:  # Filter words by length (3 to 8 characters)
-            random_words.append(word)
+    return grid, word_positions
+
+# Endpoint to generate the crossword
+@app.route('/generate', methods=['GET'])
+def generate_crossword_api():
+    words = random.sample(load_words('api\words\english.txt'), 10)  # Select 10 random words
+    crossword_grid, word_positions = generate_crossword(words)
     
-    return random_words
+    # Get clues for each word
+    clues = {word: fetch_definition(word) for word in words}
 
-def generate_crossword(word_list, grid_size):
-    grid = [[' ' for _ in range(grid_size)] for _ in range(grid_size)]
+    # Prepare response data
+    crossword = {
+        "grid": crossword_grid,
+        "word_positions": word_positions,
+        "clues": clues
+    }
 
-    def fits(word, x, y, direction):
-        if direction == 'across':
-            return all(grid[y][x + i] == ' ' or grid[y][x + i] == word[i] for i in range(len(word)))
-        else:
-            return all(grid[y + i][x] == ' ' or grid[y + i][x] == word[i] for i in range(len(word)))
-
-    def add_word(word, x, y, direction):
-        if direction == 'across':
-            for i in range(len(word)):
-                grid[y][x + i] = word[i]
-        else:
-            for i in range(len(word)):
-                grid[y + i][x] = word[i]
-
-    random.shuffle(word_list)
-    word_list.sort(key=lambda x: len(x), reverse=True)
-
-    starting_cells = [(0, 0, 'across')]
-
-    for y in range(grid_size):
-        for x in range(grid_size):
-            if grid[y][x] == ' ':
-                if x == 0 or grid[y][x - 1] == '#':
-                    starting_cells.append((x, y, 'across'))
-                if y == 0 or grid[y - 1][x] == '#':
-                    starting_cells.append((x, y, 'down'))
-
-    for start_x, start_y, direction in starting_cells:
-        for word in word_list:
-            if fits(word, start_x, start_y, direction):
-                add_word(word, start_x, start_y, direction)
-                word_list.remove(word)
-
-    return grid
-
-def generate_crossword_clues(words):
-    clues = {}
-    for word in words:
-        # Fetching the synonyms for each word from WordNet
-        synsets = wordnet.synsets(word)
-        clue = ''
-        if synsets:
-            clue = synsets[0].definition()  # Taking the definition from the first synset
-        clues[word] = clue 
-    return clues
-
-@app.route('/api/crossword')
-def crossword():
-    word_list = get_random_words(5)   
-    grid_size = max(len(word) for word in word_list) + 1
-    clues = generate_crossword_clues(word_list)
-    crossword_grid = generate_crossword(word_list, grid_size)
-    return jsonify({"grid": crossword_grid, "clues": clues})
+    return jsonify(crossword)
 
 if __name__ == '__main__':
     app.run(debug=True)
