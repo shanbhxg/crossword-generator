@@ -5,7 +5,7 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  /* background-color: #242424; */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -63,17 +63,84 @@ button:focus-visible {
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  text-align: center;
+  color: #2c3e50;
+  margin-top: 60px;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+
+button {
+padding: 10px 20px;
+font-size: 16px;
+cursor: pointer;
+background-color: #4caf50;
+color: white;
+border: none;
+border-radius: 5px;
 }
+
+.crossword-container {
+margin-top: 20px;
+}
+
+.crossword-row {
+display: flex;
+justify-content: center;
+}
+
+.crossword-cell {
+width: 30px;
+height: 30px;
+border: 1px solid #ccc;
+display: flex;
+justify-content: center;
+align-items: center;
+}
+
+.empty {
+background-color: #00000050;
+}
+
+.filled {
+background-color: #e0e0e0;
+}
+
+.crossword-input {
+text-align: center;
+font-size: 18px;
+border: none;
+outline: none;
+width: 20px;
+height: 20px;
+}
+
+.correct {
+background-color: #4caf50;
+color: white;
+}
+
+.incorrect {
+background-color: #f44336;
+color: white;
+}
+
+.word-number {
+font-size: 14px;
+color: #007bff;
+font-weight: bold;
+}
+
+.clues-container {
+margin-top: 20px;
+text-align: left;
+max-width: 600px;
+margin: 0 auto;
+}
+
+.error {
+color: red;
+font-weight: bold;
+margin-top: 20px;
+}
+

@@ -33,27 +33,71 @@ def generate_crossword(words):
     def place_word(word):
         word_len = len(word)
         placed = False
-        for _ in range(100): 
+        for _ in range(100):  
             direction = random.choice(['across', 'down'])
             x = random.randint(0, grid_size - 1)
             y = random.randint(0, grid_size - 1)
+
             if direction == 'across' and x + word_len <= grid_size:
-                if all(grid[y][x + i] == ' ' or grid[y][x + i] == word[i] for i in range(word_len)):
+                valid = True
+                # no touching words
+                for i in range(word_len):
+                    if grid[y][x + i] != ' ' and grid[y][x + i] != word[i]:
+                        valid = False
+                        break
+                    if x + i > 0 and grid[y][x + i - 1] != ' ':  
+                        valid = False
+                        break
+                    if x + i < grid_size - 1 and grid[y][x + i + 1] != ' ':  
+                        valid = False
+                        break
+                    if y > 0 and grid[y - 1][x + i] != ' ':  
+                        valid = False
+                        break
+                    if y < grid_size - 1 and grid[y + 1][x + i] != ' ': 
+                        valid = False
+                        break
+
+                if valid:
                     for i in range(word_len):
                         grid[y][x + i] = word[i]
                     word_positions.append({'word': word, 'x': x, 'y': y, 'direction': 'across', 'number': len(word_numbers) + 1})
                     word_numbers[word] = len(word_numbers) + 1
                     placed = True
                     break
+
             elif direction == 'down' and y + word_len <= grid_size:
-                if all(grid[y + i][x] == ' ' or grid[y + i][x] == word[i] for i in range(word_len)):
+                valid = True
+
+                for i in range(word_len):
+                    if grid[y + i][x] != ' ' and grid[y + i][x] != word[i]:
+                        valid = False
+                        break
+                    if x > 0 and grid[y + i][x - 1] != ' ':  
+                        valid = False
+                        break
+                    if x < grid_size - 1 and grid[y + i][x + 1] != ' ':  
+                        valid = False
+                        break
+                    if y + i > 0 and grid[y + i - 1][x] != ' ':  
+                        valid = False
+                        break
+                    if y + i < grid_size - 1 and grid[y + i + 1][x] != ' ': 
+                        valid = False
+                        break
+
+                if valid:
                     for i in range(word_len):
                         grid[y + i][x] = word[i]
                     word_positions.append({'word': word, 'x': x, 'y': y, 'direction': 'down', 'number': len(word_numbers) + 1})
                     word_numbers[word] = len(word_numbers) + 1
                     placed = True
                     break
+
         return placed
+
+
+
 
     for word in sorted(words, key=lambda w: -len(w)):  
         if not place_word(word):
