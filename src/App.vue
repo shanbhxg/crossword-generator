@@ -51,10 +51,11 @@
 import { reactive } from 'vue';
 const getApiBaseUrl = () => {
   if (window.location.hostname === "crosswrd.vercel.app") {
-    return "https://crosswrd.vercel.app"; // PROD
+    return "https://crosswrd.vercel.app/api"; // PROD
   }
   return "http://127.0.0.1:5000"; // LOCAL
 };
+
 export default {
   data() {
     return {
