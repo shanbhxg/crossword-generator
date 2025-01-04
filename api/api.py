@@ -126,4 +126,4 @@ def generate_crossword_api():
     return jsonify(crossword)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
