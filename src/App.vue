@@ -74,9 +74,17 @@ export default {
       errorMessage: null,
       acrossClues: [],
       downClues: [],
+      isMobile: false, 
     };
   },
+  mounted() {
+    this.checkMobileDevice();
+  },
   methods: {
+    checkMobileDevice() {
+      const mobileRegex = /Android|iPhone|iPad|iPod|Windows Phone|BlackBerry|Mobile/i;
+      this.isMobile = mobileRegex.test(navigator.userAgent);
+    },
     async generateCrossword() {
       try {
         const baseUrl = getApiBaseUrl();
