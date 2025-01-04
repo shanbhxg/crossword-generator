@@ -1,48 +1,53 @@
 <template>
   <div id="app">
-    <h1>CROSSWRD</h1>
-    <h3 v-if="!gen">Generate a unique crossword puzzle!</h3>
-    <div v-if="grid.length > 0" class="crossword-container">
-      <div v-for="(row, rowIndex) in grid" :key="rowIndex" class="crossword-row">
-        <div v-for="(cell, cellIndex) in row" :key="cellIndex" class="crossword-cell" :class="{'empty': cell === ' ', 'filled': cell !== ' '}">
-          <div v-if="isStartOfWord(rowIndex, cellIndex)" class="word-number">
-            {{ getWordNumber(rowIndex, cellIndex) }}
+    <div v-if="isMobile" class="mobile-message">
+      <p>This site is not accessible on mobile devices. Please visit from a desktop.</p>
+    </div>
+    <div v-else>
+      <h1>CROSSWRD</h1>
+      <h3 v-if="!gen">Generate a unique crossword puzzle!</h3>
+      <div v-if="grid.length > 0" class="crossword-container">
+        <div v-for="(row, rowIndex) in grid" :key="rowIndex" class="crossword-row">
+          <div v-for="(cell, cellIndex) in row" :key="cellIndex" class="crossword-cell" :class="{'empty': cell === ' ', 'filled': cell !== ' '}">
+            <div v-if="isStartOfWord(rowIndex, cellIndex)" class="word-number">
+              {{ getWordNumber(rowIndex, cellIndex) }}
+            </div>
+            <input
+              v-if="cell !== ' '"
+              v-model="userGrid[rowIndex][cellIndex]"
+              :maxlength="1"
+              class="crossword-input"
+              :class="getInputClass(rowIndex, cellIndex)"
+            />
           </div>
-          <input
-            v-if="cell !== ' '"
-            v-model="userGrid[rowIndex][cellIndex]"
-            :maxlength="1"
-            class="crossword-input"
-            :class="getInputClass(rowIndex, cellIndex)"
-          />
-        </div>
-      </div>
-    </div>
-
-    <div v-if="clues.length > 0" class="clues-container">
-      <h3>Clues:</h3>
-      <div v-if="acrossClues.length > 0">
-        <h4>Across</h4>
-        <div v-for="clue in acrossClues" :key="clue.number">
-          <strong>{{ clue.number }}.</strong> {{ clue.text }} ({{ clue.length }})
         </div>
       </div>
 
-      <div v-if="downClues.length > 0">
-        <h4>Down</h4>
-        <div v-for="clue in downClues" :key="clue.number">
-          <strong>{{ clue.number }}.</strong> {{ clue.text }} ({{ clue.length }})
+      <div v-if="clues.length > 0" class="clues-container">
+        <h3>Clues:</h3>
+        <div v-if="acrossClues.length > 0">
+          <h4>Across</h4>
+          <div v-for="clue in acrossClues" :key="clue.number">
+            <strong>{{ clue.number }}.</strong> {{ clue.text }} ({{ clue.length }})
+          </div>
+        </div>
+
+        <div v-if="downClues.length > 0">
+          <h4>Down</h4>
+          <div v-for="clue in downClues" :key="clue.number">
+            <strong>{{ clue.number }}.</strong> {{ clue.text }} ({{ clue.length }})
+          </div>
         </div>
       </div>
-    </div>
 
-    <div v-if="errorMessage" class="error">
-      <p>{{ errorMessage }}</p>
-    </div>
-    <div class="buttons-container">
-      <button v-if='!gen' id='generate' @click="generateCrossword">Generate New Puzzle</button>
-      <button v-if='gen' id='generate2' @click="generateCrossword">Generate Another Puzzle</button>
-      <button v-if='gen' id='fill' @click="autofillGrid">Answers</button>
+      <div v-if="errorMessage" class="error">
+        <p>{{ errorMessage }}</p>
+      </div>
+      <div class="buttons-container">
+        <button v-if='!gen' id='generate' @click="generateCrossword">Generate New Puzzle</button>
+        <button v-if='gen' id='generate2' @click="generateCrossword">Generate Another Puzzle</button>
+        <button v-if='gen' id='fill' @click="autofillGrid">Answers</button>
+      </div>
     </div>
   </div>
 </template>
