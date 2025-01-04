@@ -1,6 +1,7 @@
 <template>
   <div id="app">
-    <h1>Crossword Generator</h1>
+    <h1>CROSSWRD</h1>
+    <h3 v-if="!gen">Generate a unique crossword puzzle!</h3>
     <div v-if="grid.length > 0" class="crossword-container">
       <div v-for="(row, rowIndex) in grid" :key="rowIndex" class="crossword-row">
         <div v-for="(cell, cellIndex) in row" :key="cellIndex" class="crossword-cell" :class="{'empty': cell === ' ', 'filled': cell !== ' '}">
@@ -13,7 +14,6 @@
             :maxlength="1"
             class="crossword-input"
             :class="getInputClass(rowIndex, cellIndex)"
-            
           />
         </div>
       </div>
@@ -21,8 +21,6 @@
 
     <div v-if="clues.length > 0" class="clues-container">
       <h3>Clues:</h3>
-
-      <!-- ACROSS -->
       <div v-if="acrossClues.length > 0">
         <h4>Across</h4>
         <div v-for="clue in acrossClues" :key="clue.number">
@@ -30,7 +28,6 @@
         </div>
       </div>
 
-      <!-- DOWN -->
       <div v-if="downClues.length > 0">
         <h4>Down</h4>
         <div v-for="clue in downClues" :key="clue.number">
@@ -42,13 +39,17 @@
     <div v-if="errorMessage" class="error">
       <p>{{ errorMessage }}</p>
     </div>
-    
-    <button id='generate' @click="generateCrossword">Generate Crossword</button>
+    <div class="buttons-container">
+      <button v-if='!gen' id='generate' @click="generateCrossword">Generate New Puzzle</button>
+      <button v-if='gen' id='generate2' @click="generateCrossword">Generate Another Puzzle</button>
+      <button v-if='gen' id='fill' @click="autofillGrid">Answers</button>
+    </div>
   </div>
 </template>
 
 <script>
 import { reactive } from 'vue';
+
 const getApiBaseUrl = () => {
   if (window.location.hostname === "crosswrd.vercel.app") {
     return "https://crosswrd.vercel.app/api"; // PROD
@@ -59,8 +60,10 @@ const getApiBaseUrl = () => {
 export default {
   data() {
     return {
+      gen: false,
       grid: [],
       userGrid: [],
+      solutionGrid: [],
       clues: [],
       wordPositions: [],
       errorMessage: null,
@@ -72,16 +75,18 @@ export default {
     async generateCrossword() {
       try {
         const baseUrl = getApiBaseUrl();
-        const response = await fetch(`${baseUrl}/generate`);        
+        const response = await fetch(`${baseUrl}/generate`);
         if (!response.ok) {
           throw new Error("Failed to fetch crossword data");
         }
         const data = await response.json();
         this.grid = data.grid;
+        this.solutionGrid = JSON.parse(JSON.stringify(data.grid)); 
         this.wordPositions = data.word_positions;
         this.clues = data.clues;
         this.userGrid = this.createEmptyGrid(this.grid.length, this.grid[0].length);
         this.errorMessage = null;
+        this.gen = true;
         this.organizeClues();
       } catch (error) {
         this.errorMessage = error.message;
@@ -119,6 +124,9 @@ export default {
     },
     getInputClass(rowIndex, cellIndex) {
       return '';
+    },
+    autofillGrid() {
+      this.userGrid = JSON.parse(JSON.stringify(this.solutionGrid)); 
     },
   },
 };
