@@ -59,9 +59,9 @@ import WhatsNew from './components/WhatsNew.vue';
 
 const getApiBaseUrl = () => {
   if (window.location.hostname === "crosswrd.vercel.app") {
-    return "https://crosswrd.vercel.app/api"; // PROD
+    return "https://crosswrd.vercel.app/api"; 
   }
-  return "http://127.0.0.1:5000"; // LOCAL
+  return "http://127.0.0.1:5000"; 
 };
 
 export default {
@@ -96,9 +96,11 @@ export default {
         this.wordPositions = data.word_positions;
         this.clues = data.clues;
         this.userGrid = this.createEmptyGrid(this.grid.length, this.grid[0].length);
+        this.acrossClues = [];
+        this.downClues = [];
+        this.organizeClues();
         this.errorMessage = null;
         this.gen = true;
-        this.organizeClues();
       } catch (error) {
         this.errorMessage = error.message;
         console.error("Error generating crossword:", error);
@@ -140,18 +142,17 @@ export default {
       this.userGrid = JSON.parse(JSON.stringify(this.solutionGrid)); 
     },
     getClueClass(clue) {
+      if (!clue.text) return ''; 
       if (clue.text.includes("_")) {
-        return "blue-clue";  // fill-in-the-blank
+        return "blue-clue";  
       } else if (clue.text.includes("means the same as")) {
-        return "green-clue"; // synonym
+        return "green-clue"; 
       } else {
-        return "red-clue"; // definition
+        return "red-clue"; 
       }
     }
   },
 };
 </script>
 
-<style src="./style.css">
-
-</style>
+<style src="./style.css"></style>

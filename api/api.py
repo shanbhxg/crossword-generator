@@ -54,11 +54,11 @@ def generate_clue(word, clue_type="definition"):
         return generate_fill_in_the_blank(word)
     elif clue_type == "definition":
         definitions = generate_definitions(word)
-        return definitions[0] if definitions else None
+        return definitions[0] if definitions else "No definition found."
     elif clue_type == "synonym":
         synonyms = generate_synonyms(word)
-        return "This word means the same as: " + ", ".join(synonyms) if synonyms else None
-    return None
+        return "This word means the same as: " + ", ".join(synonyms) if synonyms else "No synonyms found."
+    return "No clue available."
 
 def generate_crossword(words):
     grid_size = 15
@@ -119,7 +119,10 @@ class Handler(BaseHTTPRequestHandler):
             words = random.sample(load_words('api/words/english.txt'), 10) 
             crossword_grid, word_positions, clues, word_numbers = generate_crossword(words)
 
-            formatted_clues = [{'number': word_numbers[word], 'text': generate_clue(word), 'length': len(word)} for word in words]
+            formatted_clues = [
+                {'number': word_numbers[word], 'text': generate_clue(word), 'length': len(word)}
+                for word in words
+            ]
             formatted_clues_sorted = sorted(formatted_clues, key=lambda clue: word_numbers[words[formatted_clues.index(clue)]])
 
             crossword = {
