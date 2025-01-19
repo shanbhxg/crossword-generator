@@ -1,9 +1,7 @@
 import random
 import json
 import requests
-
 from http.server import BaseHTTPRequestHandler
-from urllib.parse import urlparse
 import os
 
 API_URL = "https://api.dictionaryapi.dev/api/v2/entries/en/"
@@ -68,6 +66,7 @@ def generate_crossword(words):
     word_positions = []
     clues = []
     word_number = 1
+    word_numbers = {}
 
     def place_word(word):
         word_len = len(word)
@@ -81,12 +80,14 @@ def generate_crossword(words):
                     for i in range(word_len):
                         grid[y][x + i] = word[i]
                     word_positions.append({'word': word, 'x': x, 'y': y, 'direction': 'across', 'number': word_number})
+                    word_numbers[word] = word_number
                     return True
             elif direction == 'down' and y + word_len <= grid_size:
                 if all(grid[y + i][x] in [' ', word[i]] for i in range(word_len)):
                     for i in range(word_len):
                         grid[y + i][x] = word[i]
                     word_positions.append({'word': word, 'x': x, 'y': y, 'direction': 'down', 'number': word_number})
+                    word_numbers[word] = word_number
                     return True
         return False
 
@@ -110,16 +111,15 @@ def generate_crossword(words):
             clues.append({'number': word_number, 'text': clue, 'length': len(word), 'clue_type': clue_type_used})
             word_number += 1
 
-    return grid, word_positions, clues
+    return grid, word_positions, clues, word_numbers
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/api/generate':
             words = random.sample(load_words('api/words/english.txt'), 10) 
-            crossword_grid, word_positions, word_numbers = generate_crossword(words)
-            clues = {word: generate_clue(word) for word in words}
+            crossword_grid, word_positions, clues, word_numbers = generate_crossword(words)
 
-            formatted_clues = [{'number': word_numbers[word], 'text': clues[word], 'length': len(word)} for word in words]
+            formatted_clues = [{'number': word_numbers[word], 'text': generate_clue(word), 'length': len(word)} for word in words]
             formatted_clues_sorted = sorted(formatted_clues, key=lambda clue: word_numbers[words[formatted_clues.index(clue)]])
 
             crossword = {
