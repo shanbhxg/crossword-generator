@@ -49,16 +49,20 @@ def generate_synonyms(word):
         return list(synonyms)
     return None
 
-def generate_clue(word, clue_type="definition"):
-    if clue_type == "fill_in_the_blank":
-        return generate_fill_in_the_blank(word)
-    elif clue_type == "definition":
-        definitions = generate_definitions(word)
-        return definitions[0] if definitions else None
-    elif clue_type == "synonym":
-        synonyms = generate_synonyms(word)
-        return "This word means the same as: " + ", ".join(synonyms) if synonyms else None
-    return None
+def generate_clue(word):
+    fill_in_the_blank_clue = generate_fill_in_the_blank(word)
+    if fill_in_the_blank_clue:
+        return fill_in_the_blank_clue, "fill_in_the_blank"
+    
+    synonyms = generate_synonyms(word)
+    if synonyms:
+        return "This word means the same as: " + ", ".join(synonyms), "synonym"
+    
+    definition = generate_definitions(word)
+    if definition:
+        return definition[0], "definition"
+
+    return "No clue available", "none"
 
 def generate_crossword(words):
     grid_size = 15
@@ -90,22 +94,15 @@ def generate_crossword(words):
 
     for word in words:
         if place_word(word):
-            clue_types = ["definition", "synonym", "fill_in_the_blank"]
-            random.shuffle(clue_types) 
+            clue, clue_type = generate_clue(word)
 
-            clue = None
-            clue_type_used = None
-            for clue_type in clue_types:
-                clue = generate_clue(word, clue_type)
-                if clue:  
-                    clue_type_used = clue_type
-                    break
+            clues.append({
+                'number': word_number, 
+                'text': clue, 
+                'length': len(word), 
+                'clue_type': clue_type
+            })
 
-            if not clue:  
-                clue = generate_clue(word, clue_type="definition")
-                clue_type_used = "definition"
-
-            clues.append({'number': word_number, 'text': clue, 'length': len(word), 'clue_type': clue_type_used})
             word_number += 1
 
     return grid, word_positions, clues
