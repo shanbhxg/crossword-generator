@@ -54,11 +54,11 @@ def generate_clue(word, clue_type="definition"):
         return generate_fill_in_the_blank(word)
     elif clue_type == "definition":
         definitions = generate_definitions(word)
-        return definitions[0] if definitions else "No definition found."
+        return definitions[0] if definitions else None
     elif clue_type == "synonym":
         synonyms = generate_synonyms(word)
-        return "This word means the same as: " + ", ".join(synonyms) if synonyms else "No synonyms found."
-    return "No clue available."
+        return "This word means the same as: " + ", ".join(synonyms) if synonyms else None
+    return None
 
 def generate_crossword(words):
     grid_size = 15
@@ -66,7 +66,6 @@ def generate_crossword(words):
     word_positions = []
     clues = []
     word_number = 1
-    word_numbers = {}
 
     def place_word(word):
         word_len = len(word)
@@ -80,14 +79,12 @@ def generate_crossword(words):
                     for i in range(word_len):
                         grid[y][x + i] = word[i]
                     word_positions.append({'word': word, 'x': x, 'y': y, 'direction': 'across', 'number': word_number})
-                    word_numbers[word] = word_number
                     return True
             elif direction == 'down' and y + word_len <= grid_size:
                 if all(grid[y + i][x] in [' ', word[i]] for i in range(word_len)):
                     for i in range(word_len):
                         grid[y + i][x] = word[i]
                     word_positions.append({'word': word, 'x': x, 'y': y, 'direction': 'down', 'number': word_number})
-                    word_numbers[word] = word_number
                     return True
         return False
 
@@ -111,24 +108,19 @@ def generate_crossword(words):
             clues.append({'number': word_number, 'text': clue, 'length': len(word), 'clue_type': clue_type_used})
             word_number += 1
 
-    return grid, word_positions, clues, word_numbers
+    return grid, word_positions, clues
+
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/api/generate':
             words = random.sample(load_words('api/words/english.txt'), 10) 
-            crossword_grid, word_positions, clues, word_numbers = generate_crossword(words)
-
-            formatted_clues = [
-                {'number': word_numbers[word], 'text': generate_clue(word), 'length': len(word)}
-                for word in words
-            ]
-            formatted_clues_sorted = sorted(formatted_clues, key=lambda clue: word_numbers[words[formatted_clues.index(clue)]])
+            crossword_grid, word_positions, clues = generate_crossword(words)
 
             crossword = {
                 "grid": crossword_grid,
                 "word_positions": sorted(word_positions, key=lambda x: (x['direction'], x['number'])),
-                "clues": formatted_clues_sorted
+                "clues": sorted(clues, key=lambda x: x['number'])
             }
 
             self.send_response(200)
