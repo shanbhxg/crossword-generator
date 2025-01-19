@@ -117,7 +117,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == '/api/generate':
             words = random.sample(load_words('api/words/english.txt'), 10) 
             crossword_grid, word_positions, word_numbers = generate_crossword(words)
-            clues = {word: fetch_definition(word) for word in words}
+            clues = {word: generate_clue(word) for word in words}
 
             formatted_clues = [{'number': word_numbers[word], 'text': clues[word], 'length': len(word)} for word in words]
             formatted_clues_sorted = sorted(formatted_clues, key=lambda clue: word_numbers[words[formatted_clues.index(clue)]])
