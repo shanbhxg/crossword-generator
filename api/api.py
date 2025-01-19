@@ -1,7 +1,8 @@
 import random
 import json
-import requests
 from http.server import BaseHTTPRequestHandler
+from urllib.parse import urlparse
+import os
 
 API_URL = "https://api.dictionaryapi.dev/api/v2/entries/en/"
 
@@ -10,95 +11,106 @@ def load_words(file_path):
         words = file.readlines()
     return [word.strip() for word in words if len(word.strip()) >= 4]
 
-def fetch_definition(word):
+def fetch_word_data(word):
     url = f"{API_URL}{word}"
     try:
         response = requests.get(url)
         response.raise_for_status()
         data = response.json()
-        definitions = data[0]['meanings'][0]['definitions']
-        return definitions[0]['definition']
+        return data[0]
     except requests.exceptions.RequestException:
-        return "No clue available."
+        return None
+
+def generate_fill_in_the_blank(word):
+    word_data = fetch_word_data(word)
+    if word_data:
+        for meaning in word_data.get("meanings", []):
+            for definition in meaning.get("definitions", []):
+                if "example" in definition:
+                    example = definition["example"]
+                    blanked_example = example.replace(word, "_" * len(word))  
+                    return blanked_example
+    return None
+
+def generate_definitions(word):
+    word_data = fetch_word_data(word)
+    if word_data:
+        definitions = [definition['definition'] for meaning in word_data.get("meanings", []) for definition in meaning.get("definitions", [])]
+        return definitions
+    return None
+
+def generate_synonyms(word):
+    word_data = fetch_word_data(word)
+    if word_data:
+        synonyms = set()
+        for meaning in word_data.get("meanings", []):
+            for definition in meaning.get("definitions", []):
+                synonyms.update(definition.get("synonyms", []))
+        return list(synonyms)
+    return None
+
+def generate_clue(word, clue_type="definition"):
+    if clue_type == "fill_in_the_blank":
+        return generate_fill_in_the_blank(word)
+    elif clue_type == "definition":
+        definitions = generate_definitions(word)
+        return definitions[0] if definitions else None
+    elif clue_type == "synonym":
+        synonyms = generate_synonyms(word)
+        return "This word means the same as: " + ", ".join(synonyms) if synonyms else None
+    return None
 
 def generate_crossword(words):
-    grid_size = 15 
-    grid = [[' ' for _ in range(grid_size)] for _ in range(grid_size)]  
-    word_positions = []  
-    word_numbers = {} 
+    grid_size = 15
+    grid = [[' ' for _ in range(grid_size)] for _ in range(grid_size)]
+    word_positions = []
+    clues = []
+    word_number = 1
 
     def place_word(word):
         word_len = len(word)
-        placed = False
         for _ in range(100): 
             direction = random.choice(['across', 'down'])
             x = random.randint(0, grid_size - 1)
             y = random.randint(0, grid_size - 1)
 
             if direction == 'across' and x + word_len <= grid_size:
-                valid = True
-                for i in range(word_len):
-                    if grid[y][x + i] != ' ' and grid[y][x + i] != word[i]:
-                        valid = False
-                        break
-                    if x + i > 0 and grid[y][x + i - 1] != ' ':  
-                        valid = False
-                        break
-                    if x + i < grid_size - 1 and grid[y][x + i + 1] != ' ':  
-                        valid = False
-                        break
-                    if y > 0 and grid[y - 1][x + i] != ' ':  
-                        valid = False
-                        break
-                    if y < grid_size - 1 and grid[y + 1][x + i] != ' ': 
-                        valid = False
-                        break
-
-                if valid:
+                if all(grid[y][x + i] in [' ', word[i]] for i in range(word_len)):
                     for i in range(word_len):
                         grid[y][x + i] = word[i]
-                    word_positions.append({'word': word, 'x': x, 'y': y, 'direction': 'across', 'number': len(word_numbers) + 1})
-                    word_numbers[word] = len(word_numbers) + 1
-                    placed = True
-                    break
-
+                    word_positions.append({'word': word, 'x': x, 'y': y, 'direction': 'across', 'number': word_number})
+                    return True
             elif direction == 'down' and y + word_len <= grid_size:
-                valid = True
-                for i in range(word_len):
-                    if grid[y + i][x] != ' ' and grid[y + i][x] != word[i]:
-                        valid = False
-                        break
-                    if x > 0 and grid[y + i][x - 1] != ' ':  
-                        valid = False
-                        break
-                    if x < grid_size - 1 and grid[y + i][x + 1] != ' ':  
-                        valid = False
-                        break
-                    if y + i > 0 and grid[y + i - 1][x] != ' ':  
-                        valid = False
-                        break
-                    if y + i < grid_size - 1 and grid[y + i + 1][x] != ' ': 
-                        valid = False
-                        break
-
-                if valid:
+                if all(grid[y + i][x] in [' ', word[i]] for i in range(word_len)):
                     for i in range(word_len):
                         grid[y + i][x] = word[i]
-                    word_positions.append({'word': word, 'x': x, 'y': y, 'direction': 'down', 'number': len(word_numbers) + 1})
-                    word_numbers[word] = len(word_numbers) + 1
-                    placed = True
+                    word_positions.append({'word': word, 'x': x, 'y': y, 'direction': 'down', 'number': word_number})
+                    return True
+        return False
+
+    for word in words:
+        if place_word(word):
+            clue_types = ["definition", "synonym", "fill_in_the_blank"]
+            random.shuffle(clue_types) 
+
+            clue = None
+            clue_type_used = None
+            for clue_type in clue_types:
+                clue = generate_clue(word, clue_type)
+                if clue:  
+                    clue_type_used = clue_type
                     break
 
-        return placed
+            if not clue:  
+                clue = generate_clue(word, clue_type="definition")
+                clue_type_used = "definition"
 
-    for word in sorted(words, key=lambda w: -len(w)): 
-        if not place_word(word):
-            print(f"Failed to place word: {word}")
+            clues.append({'number': word_number, 'text': clue, 'length': len(word), 'clue_type': clue_type_used})
+            word_number += 1
 
-    return grid, word_positions, word_numbers
+    return grid, word_positions, clues
 
-class handler(BaseHTTPRequestHandler):
-
+class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/api/generate':
             words = random.sample(load_words('api/words/english.txt'), 10) 
@@ -118,7 +130,6 @@ class handler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps(crossword).encode('utf-8'))
-
         else:
             self.send_response(404)
             self.send_header('Content-type', 'text/html')
