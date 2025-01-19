@@ -143,3 +143,32 @@ margin-top: 20px;
 button {
   margin: 10px;
 }
+
+/* mobile-support */
+@media (max-width: 600px) {
+  .crossword-row {
+    flex-wrap: wrap;
+  }
+
+  .crossword-cell {
+    width: 20px;
+    height: 20px;
+  }
+
+  .crossword-input {
+    width: 15px;
+    height: 15px;
+    font-size: 14px;
+  }
+}
+.blue-clue {
+  color: blue !important;
+}
+
+.green-clue {
+  color: green !important;
+}
+
+.red-clue {
+  color: red !important;
+}

@@ -6,6 +6,7 @@
     <div v-else>
       <h1>CROSSWRD</h1>
       <h3 v-if="!gen">Generate a unique crossword puzzle!</h3>
+      <WhatsNew v-if="!gen"/>
       <div v-if="grid.length > 0" class="crossword-container">
         <div v-for="(row, rowIndex) in grid" :key="rowIndex" class="crossword-row">
           <div v-for="(cell, cellIndex) in row" :key="cellIndex" class="crossword-cell" :class="{'empty': cell === ' ', 'filled': cell !== ' '}">
@@ -27,14 +28,14 @@
         <h3>Clues:</h3>
         <div v-if="acrossClues.length > 0">
           <h4>Across</h4>
-          <div v-for="clue in acrossClues" :key="clue.number">
+          <div v-for="clue in acrossClues" :key="clue.number" :class="getClueClass(clue)">
             <strong>{{ clue.number }}.</strong> {{ clue.text }} ({{ clue.length }})
           </div>
         </div>
 
         <div v-if="downClues.length > 0">
           <h4>Down</h4>
-          <div v-for="clue in downClues" :key="clue.number">
+          <div v-for="clue in downClues" :key="clue.number" :class="getClueClass(clue)">
             <strong>{{ clue.number }}.</strong> {{ clue.text }} ({{ clue.length }})
           </div>
         </div>
@@ -54,6 +55,7 @@
 
 <script>
 import { reactive } from 'vue';
+import WhatsNew from './components/WhatsNew.vue'; 
 
 const getApiBaseUrl = () => {
   if (window.location.hostname === "crosswrd.vercel.app") {
@@ -63,6 +65,9 @@ const getApiBaseUrl = () => {
 };
 
 export default {
+  components: {
+    WhatsNew, 
+  },
   data() {
     return {
       gen: false,
@@ -77,14 +82,7 @@ export default {
       isMobile: false, 
     };
   },
-  mounted() {
-    this.checkMobileDevice();
-  },
   methods: {
-    checkMobileDevice() {
-      const mobileRegex = /Android|iPhone|iPad|iPod|Windows Phone|BlackBerry|Mobile/i;
-      this.isMobile = mobileRegex.test(navigator.userAgent);
-    },
     async generateCrossword() {
       try {
         const baseUrl = getApiBaseUrl();
@@ -141,8 +139,19 @@ export default {
     autofillGrid() {
       this.userGrid = JSON.parse(JSON.stringify(this.solutionGrid)); 
     },
+    getClueClass(clue) {
+      if (clue.text.includes("_")) {
+        return "blue-clue";  // fill-in-the-blank
+      } else if (clue.text.includes("means the same as")) {
+        return "green-clue"; // synonym
+      } else {
+        return "red-clue"; // definition
+      }
+    }
   },
 };
 </script>
 
-<style src="./style.css"></style>
+<style src="./style.css">
+
+</style>
