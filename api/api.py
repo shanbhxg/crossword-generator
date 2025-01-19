@@ -1,5 +1,7 @@
 import random
 import json
+import requests
+
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse
 import os
